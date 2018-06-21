@@ -10,7 +10,7 @@ private:
     int playerNum; // 1 or 2
     int **curArr; // copy of board
     const static int boardN = 15;
-    const static int maxDep = 5;
+    const static int maxDep = 6;
     const static int MAXSC = (1 << 30) - 1;
     const static int MINSC = 0 - (1 << 30);
 public:
@@ -78,38 +78,22 @@ string gamePlayer::makeDecision(int **arr){
 string gamePlayer::computerDecision(){
     int val = MINSC;
     int tarx = -1, tary = -1;
-    for (int i = 0; i < boardN; i++)
-        for (int j = 0; j < boardN; j++)
-            if (curArr[i][j] == 0){
-                tarx = i; tary = j;
-            }
-    int i, j, res;
-    int rd = rand(); rd = rand();
-    if (rd % 2 == 0){
-        for (int ij = 0; ij < boardN * boardN; ij++){
-            i = ij / boardN; j = ij % boardN;
-            if (isGoodPlace(i, j)){
-                curArr[i][j] = playerNum;
-                res = dfs(val, 1);
-                curArr[i][j] = 0;
-                if (res > val) {
-                    val = res;
-                    tarx = i; tary = j;
-                }
-            }
+    for (int ij = 0; ij < 224; ij++)
+        if (curArr[ij / boardN][ij % boardN] == 0){
+            tarx = ij / boardN; 
+            tary = ij % boardN; 
+            break;
         }
-    }
-    else{
-        for (int ij = boardN * boardN - 1; ij >= 0; ij--){
-            i = ij / boardN; j = ij % boardN;
-            if (isGoodPlace(i, j)){
-                curArr[i][j] = playerNum;
-                res = dfs(val, 1);
-                curArr[i][j] = 0;
-                if (res > val) {
-                    val = res;
-                    tarx = i; tary = j;
-                }
+    int i, j, res, d = 1;
+    for (int ij = 0; ij <= 224; ij++){
+        i = ij / boardN; j = ij % boardN;
+        if (isGoodPlace(i, j)){
+            curArr[i][j] = playerNum;
+            res = dfs(val, 1);
+            curArr[i][j] = 0;
+            if (res > val) {
+                val = res;
+                tarx = i; tary = j;
             }
         }
     }
@@ -132,33 +116,33 @@ bool gamePlayer::isGoodPlace(int i, int j){
 
 int gamePlayer::dfs(int boundary, int dep){
     int sc = scoreIt(dep);
-    if (dep == maxDep) return sc;
-    if (sc > (1 << 25) || sc < 0 - (1 << 25)) return sc;
+    if (dep == maxDep) return (sc);
+    if (sc > (1 << 22) || sc < (0 - (1 << 22))) return sc;
     int i, j, res, val;
     if (dep % 2 == 1){
         val = MAXSC;
-        for (int ij = 0; ij < boardN * boardN; ij++){
+        for (int ij = 0; ij <= 224; ij++){
             i = ij / boardN; j = ij % boardN;
             if (isGoodPlace(i, j)){
                 curArr[i][j] = 3 - playerNum;
                 res = dfs(val, dep + 1);
                 curArr[i][j] = 0;
                 if (res < val) val = res;
-                if (val <= boundary) break;
+                if (val <= boundary) return val;
             }
         }
         return val;
     }
     else{
         val = MINSC;
-        for (int ij = boardN * boardN - 1; ij >= 0; ij--){
+        for (int ij = 224; ij >= 0; ij--){
             i = ij / boardN; j = ij % boardN;
             if (isGoodPlace(i, j)){
                 curArr[i][j] = playerNum;
                 res = dfs(val, dep + 1);
                 curArr[i][j] = 0;
                 if (res > val) val = res;
-                if (val >= boundary) break;
+                if (val >= boundary) return val;
             }
         }
         return val;
