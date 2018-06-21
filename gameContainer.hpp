@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
+#include <vector>
 using namespace std;
 
 class gameContainer{
@@ -12,6 +13,7 @@ private:
     gamePlayer *p2;
     gameBoard *bd;
 public:
+    vector<int> steps;
     gameContainer();
     void gameStart();
 private:
@@ -54,6 +56,7 @@ gameContainer::gameContainer(){
         }
     }
     cout << "Ready to start." << endl;
+    while (!steps.empty()) steps.pop_back();
 }
 
 void gameContainer::gameStart(){
@@ -64,21 +67,26 @@ void gameContainer::gameStart(){
     if (p1->getPlayerType() == "computer"){
         cout << "Next step: " << "hh" << endl; 
         bd->add("hh", 1);
+        steps.push_back(112);
     }
     else{
-        dc = p1->makeDecision(bd->getBoard());
+        dc = p1->makeDecision(bd->getBoard(), steps);
         cout << "Next step: " << dc << endl;
         bd->add(dc, 1);
+        steps.push_back((dc[0] - 'a') * 15 + dc[1] - 'a');
     }
     system("pause");
     while (true){
         bd->printBoard();
         ++step;
-        if (step % 2 == 0) dc = p1->makeDecision(bd->getBoard());
-        else dc = p2->makeDecision(bd->getBoard());
+        if (step % 2 == 0) 
+            dc = p1->makeDecision(bd->getBoard(), steps);
+        else 
+            dc = p2->makeDecision(bd->getBoard(), steps);
         cout << "Next step: " << dc << endl;
         if (step % 2 == 0) bd->add(dc, 1);
         else bd->add(dc, 2);
+        steps.push_back((dc[0] - 'a') * 15 + dc[1] - 'a');
         jd = gameJudge();
         if (jd > 0){
             bd->printBoard();

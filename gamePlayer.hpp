@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <stdlib.h>
-#include <time.h>
+#include <vector>
 using namespace std;
 
 class gamePlayer{
@@ -10,7 +10,7 @@ private:
     int playerNum; // 1 or 2
     int **curArr; // copy of board
     const static int boardN = 15;
-    const static int maxDep = 6;
+    const static int maxDep = 4; // can be 2, 3, 4, 5
     const static int MAXSC = (1 << 30) - 1;
     const static int MINSC = 0 - (1 << 30);
 public:
@@ -18,16 +18,15 @@ public:
     int getPlayerNum();
     gamePlayer(const string &type, int num);
     ~gamePlayer();
-    string makeDecision(int **arr);
-    string computerDecision();
+    string makeDecision(int **arr, vector<int> &steps);
+    string computerDecision(vector<int> &steps);
 private:
-    bool isGoodPlace(int i, int j);
     int scoreIt(int dep);
     int countContiniousR(int x, int y, int pnum);
     int countContiniousD(int x, int y, int pnum);
     int countContiniousRD(int x, int y, int pnum);
     int countContiniousRU(int x, int y, int pnum);
-    int dfs(int boundary, int dep);
+    int dfs(int boundary, int dep, vector<int> &steps);
 };
 
 string gamePlayer::getPlayerType(){ return playerType; }
@@ -36,8 +35,6 @@ int gamePlayer::getPlayerNum(){ return playerNum; }
 
 gamePlayer::gamePlayer(const string &type, int num){
     playerType = "";
-    srand((unsigned)(time(0)));
-    int rd = rand();
     if (type == "computer") playerType = "computer";
     if (type == "human") playerType = "human";
     playerNum = num;
@@ -54,7 +51,7 @@ gamePlayer::~gamePlayer(){
     delete curArr;
 }
 
-string gamePlayer::makeDecision(int **arr){
+string gamePlayer::makeDecision(int **arr, vector<int> &steps){
     for (int i = 0; i < boardN; i++)
         for (int j = 0; j < boardN; j++)
             curArr[i][j] = arr[i][j];
@@ -72,29 +69,42 @@ string gamePlayer::makeDecision(int **arr){
         }
         return s;
     }
-    else return this->computerDecision();
+    else return this->computerDecision(steps);
 }
 
-string gamePlayer::computerDecision(){
+string gamePlayer::computerDecision(vector<int> &steps){
     int val = MINSC;
     int tarx = -1, tary = -1;
-    for (int ij = 0; ij < 224; ij++)
+    int i, j, res;
+    for (int ij = 224; ij >= 0; ij--)
         if (curArr[ij / boardN][ij % boardN] == 0){
             tarx = ij / boardN; 
             tary = ij % boardN; 
             break;
         }
-    int i, j, res, d = 1;
-    for (int ij = 0; ij <= 224; ij++){
-        i = ij / boardN; j = ij % boardN;
-        if (isGoodPlace(i, j)){
-            curArr[i][j] = playerNum;
-            res = dfs(val, 1);
-            curArr[i][j] = 0;
-            if (res > val) {
-                val = res;
-                tarx = i; tary = j;
-            }
+    int vsize = steps.size();
+    int visit[225] = {0};
+    for (int t = vsize - 1; t >= 0; t--){
+        i = steps[t] / boardN; j = steps[t] % boardN;
+        for (int dx = -1; dx <= 1; dx++){
+            for (int dy = -1; dy <= 1; dy++)
+                if ((i + dx >= 0 && i + dx < boardN)
+                && (j + dy >= 0 && j + dy < boardN)){
+                    if (curArr[i + dx][j + dy] == 0 
+                    && visit[(i + dx) * 15 + j + dy] == 0){
+                        visit[(i + dx) * 15 + j + dy] = 1;
+                        curArr[i + dx][j + dy] = playerNum;
+                        steps.push_back((i + dx) * 15 + j + dy);
+                        res = dfs(val, 1, steps);
+                        steps.pop_back();
+                        curArr[i + dx][j + dy] = 0;
+                        if (res > val) {
+                            val = res;
+                            tarx = i + dx; 
+                            tary = j + dy;
+                        }
+                    }
+                }
         }
     }
     string s = "zz";
@@ -103,46 +113,58 @@ string gamePlayer::computerDecision(){
     return s;
 }
 
-bool gamePlayer::isGoodPlace(int i, int j){
-    if (curArr[i][j] != 0) return false;
-    int c = 0;
-    for (int dx = -1; dx <= 1; dx++)
-        for (int dy = -1; dy <= 1; dy++)
-            if (i + dx >= 0 && i + dx < boardN
-                && j + dy >= 0 && j + dy < boardN)
-                c += (curArr[i + dx][j + dy] != 0);
-    return (c > 0);
-}
-
-int gamePlayer::dfs(int boundary, int dep){
+int gamePlayer::dfs(int boundary, int dep, vector<int> &steps){
     int sc = scoreIt(dep);
     if (dep == maxDep) return (sc);
     if (sc > (1 << 22) || sc < (0 - (1 << 22))) return sc;
     int i, j, res, val;
+    int visit[225] = {0};
     if (dep % 2 == 1){
         val = MAXSC;
-        for (int ij = 0; ij <= 224; ij++){
-            i = ij / boardN; j = ij % boardN;
-            if (isGoodPlace(i, j)){
-                curArr[i][j] = 3 - playerNum;
-                res = dfs(val, dep + 1);
-                curArr[i][j] = 0;
-                if (res < val) val = res;
-                if (val <= boundary) return val;
+        int vsize = steps.size();
+        for (int t = vsize - 1; t >= 0; t--){
+            i = steps[t] / boardN; j = steps[t] % boardN;
+            for (int dx = -1; dx <= 1; dx++){
+                for (int dy = -1; dy <= 1; dy++)
+                    if ((i + dx >= 0 && i + dx < boardN)
+                    && (j + dy >= 0 && j + dy < boardN)){
+                        if (curArr[i + dx][j + dy] == 0
+                        && visit[(i + dx) * 15 + j + dy] == 0){
+                        visit[(i + dx) * 15 + j + dy] = 1;
+                            curArr[i + dx][j + dy] = 3 - playerNum;
+                            steps.push_back((i + dx) * 15 + j + dy);
+                            res = dfs(val, dep + 1, steps);
+                            steps.pop_back();
+                            curArr[i + dx][j + dy] = 0;
+                            if (res < val) val = res;
+                            if (val <= boundary) return val;
+                        }
+                    }
             }
         }
         return val;
     }
     else{
         val = MINSC;
-        for (int ij = 224; ij >= 0; ij--){
-            i = ij / boardN; j = ij % boardN;
-            if (isGoodPlace(i, j)){
-                curArr[i][j] = playerNum;
-                res = dfs(val, dep + 1);
-                curArr[i][j] = 0;
-                if (res > val) val = res;
-                if (val >= boundary) return val;
+        int vsize = steps.size();
+        for (int t = vsize - 1; t >= 0; t--){
+            i = steps[t] / boardN; j = steps[t] % boardN;
+            for (int dx = -1; dx <= 1; dx++){
+                for (int dy = -1; dy <= 1; dy++)
+                    if ((i + dx >= 0 && i + dx < boardN)
+                    && (j + dy >= 0 && j + dy < boardN)){
+                        if (curArr[i + dx][j + dy] == 0
+                        && visit[(i + dx) * 15 + j + dy] == 0){
+                        visit[(i + dx) * 15 + j + dy] = 1;
+                            curArr[i + dx][j + dy] = playerNum;
+                            steps.push_back((i + dx) * 15 + j + dy);
+                            res = dfs(val, dep + 1, steps);
+                            steps.pop_back();
+                            curArr[i + dx][j + dy] = 0;
+                            if (res > val) val = res;
+                            if (val >= boundary) return val;
+                        }
+                    }
             }
         }
         return val;
