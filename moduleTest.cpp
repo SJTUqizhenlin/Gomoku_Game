@@ -26,7 +26,12 @@ void test2(){
     b->add("hg", 2);
     b->add("hi", 2);
     b->add("hf", 1);
-    string s = p->makeDecision(b->getBoard());
+    vector<int> v;
+    v.push_back(112);
+    v.push_back(111);
+    v.push_back(113);
+    v.push_back(110);
+    string s = p->makeDecision(b->getBoard(), v);
     cout << s << endl;
     b->add(s, 2);
     b->printBoard();
