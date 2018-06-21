@@ -60,7 +60,8 @@ string gamePlayer::makeDecision(int **arr, vector<int> &steps){
     if (playerType == "human"){
         string s = "";
         while (true){
-            cout  << "Human player, please make your decision" << endl;
+            cout << "Human player, please make your decision" << endl;
+            cout << "e.g. input 'ab' for row[a], col[b]" << endl;
             cin >> s;
             if (s[0] >= 'a' && s[0] <= 'o' 
                 && s[1] >= 'a' && s[1] <= 'o'
