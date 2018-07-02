@@ -1,3 +1,7 @@
+/*
+This is a class for player, both human and computer.
+The difference between them is one function.
+*/
 #include <iostream>
 #include <string>
 #include <stdlib.h>

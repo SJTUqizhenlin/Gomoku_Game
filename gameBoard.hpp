@@ -1,3 +1,6 @@
+/*
+This class is a simulation of game board.
+*/
 #include <iostream>
 #include <string>
 using namespace std;

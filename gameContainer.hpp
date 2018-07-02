@@ -1,3 +1,7 @@
+/*
+This class is used to track a game.
+And a judger is included.
+*/
 #include "gamePlayer.hpp"
 #include "gameBoard.hpp"
 #include <iostream>
