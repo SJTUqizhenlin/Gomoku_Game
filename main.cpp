@@ -1,3 +1,8 @@
+/*
+Here is ths main file.
+You can see what is going on from here.
+*/
+
 #include <iostream>
 #include <string>
 #include <stdlib.h>
